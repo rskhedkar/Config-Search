@@ -1,0 +1,240 @@
+
+    Install Flask: First, make sure you have Flask installed. You can install it via pip:
+
+    bash
+
+pip install Flask netmiko
+
+Create Project Structure: Create a directory for your project, e.g., cisco_device_checker, and within it create the following structure:
+
+    cisco_device_checker/
+    ├── app.py
+    ├── templates/
+    │   └── index.html
+    └── devices.csv
+
+
+html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cisco Device Checker</title>
+</head>
+<body>
+    <h1>Cisco Device Checker</h1>
+    <form method="post">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+        <label for="keyword">Keyword:</label>
+        <input type="text" id="keyword" name="keyword" required><br><br>
+        <button type="submit">Check Devices</button>
+    </form>
+
+    {% if results %}
+        <h2>Results:</h2>
+        <pre>{{ results }}</pre>
+    {% endif %}
+</body>
+</html>
+
+
+python
+
+from flask import Flask, request, render_template
+import csv
+from netmiko import ConnectHandler
+
+app = Flask(__name__)
+
+def check_device(device, username, password, keyword):
+    device['username'] = username
+    device['password'] = password
+    try:
+        connection = ConnectHandler(**device)
+        output = connection.send_command("show running-config")
+        
+        lines_with_keyword = [line for line in output.splitlines() if keyword in line]
+        return (device['name'], lines_with_keyword)
+
+    except Exception as e:
+        return (device['name'], str(e))
+    finally:
+        connection.disconnect()
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    results = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        keyword = request.form['keyword']
+
+        devices = []
+        with open('devices.csv', mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                devices.append({
+                    'device_type': 'cisco_ios',
+                    'host': row['ip_address'],
+                    'name': row['hostname']
+                })
+
+        output_results = []
+        for device in devices:
+            device_name, lines = check_device(device, username, password, keyword)
+            if lines:
+                output_results.append(f"{device_name}:\n" + "\n".join(lines))
+            else:
+                output_results.append(f"{device_name}: Keyword not found or connection failed.")
+
+        results = "\n\n".join(output_results)
+
+    return render_template('index.html', results=results)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+    bash
+
+cd cisco_device_checker
+
+Run the Flask Application:
+
+bash
+
+    python app.py
+
+    Access the Web Interface: Open a web browser and navigate to http://127.0.0.1:5000.
+
+
+python
+
+from flask import Flask, request, render_template
+import csv
+from netmiko import ConnectHandler
+
+app = Flask(__name__)
+
+def check_device(device, username, password, keyword):
+    device['username'] = username
+    device['password'] = password
+    try:
+        connection = ConnectHandler(**device)
+        output = connection.send_command("show running-config")
+        
+        lines_with_keyword = [line for line in output.splitlines() if keyword in line]
+        return (device['name'], lines_with_keyword)
+
+    except Exception as e:
+        return (device['name'], str(e))
+    finally:
+        connection.disconnect()
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    results = None
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        keyword = request.form['keyword']
+
+        devices = []
+        with open('devices.csv', mode='r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                devices.append({
+                    'device_type': 'cisco_ios',
+                    'host': row['ip_address'],
+                    'name': row['hostname']
+                })
+
+        output_results = []
+        for device in devices:
+            device_name, lines = check_device(device, username, password, keyword)
+            if lines:
+                output_results.append(f"{device_name}:\n" + "\n".join(lines))
+            else:
+                output_results.append(f"{device_name}: Keyword not found or connection failed.")
+
+        results = "\n\n".join(output_results)
+
+    return render_template('index.html', results=results)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cisco Device Checker</title>
+</head>
+<body>
+    <h1>Cisco Device Checker</h1>
+    <form method="post">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+        <label for="keyword">Keyword:</label>
+        <input type="text" id="keyword" name="keyword" required><br><br>
+        <button type="submit">Check Devices</button>
+    </form>
+
+    {% if results %}
+        <h2>Results:</h2>
+        <pre>{{ results }}</pre>
+    {% endif %}
+</body>
+</html>
+
+html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cisco Device Checker</title>
+</head>
+<body>
+    <h1>Cisco Device Checker</h1>
+    <form method="post">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br><br>
+        <label for="keyword">Keyword:</label>
+        <input type="text" id="keyword" name="keyword" required><br><br>
+        <button type="submit">Check Devices</button>
+    </form>
+
+    {% if results %}
+        <h2>Results:</h2>
+        <pre>
+        {% for result in results.split('\n\n') %}
+            <strong>{{ result.split(':')[0] }}</strong>:
+            {% for line in result.split('\n')[1:] %}
+                {{ line }}
+            {% endfor %}
+            \n\n
+        {% endfor %}
+        </pre>
+    {% endif %}
+</body>
+</html>
+
+
+
+
+
